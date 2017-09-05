@@ -1,0 +1,153 @@
+# Custom OCIO config by Ingmar Rieger using ACEScg as the rendering primaries and ACES viewing transforms for tonemapped preview
+
+
+ocio_profile_version: 1
+
+search_path: "luts"
+strictparsing: true
+luma: [0.272229, 0.674082, 0.0536895]
+
+description: OCIO config by Ingmar Rieger. Based on filmic and ACES 1.0.3 configs.
+
+
+roles:
+  reference: ACEScg
+
+  # Internal scene linear space
+  scene_linear: ACEScg
+  rendering: ACEScg
+
+  # Default color space for byte image
+  default_byte: sRGB
+
+  # Default color space for float images
+  default_float: ACES
+
+  # Default color space sequencer is working in
+  default_sequencer: sRGB
+
+  # Color spaces for color picking and texture painting (not internally supported yet)
+  color_picking: Raw
+  texture_paint: Raw
+
+  # Non-color data
+  data: Non-Color
+
+
+displays:
+  sRGB:
+    - !<View> {name: Default, colorspace: sRGB}
+    - !<View> {name: RRT 1.0.3, colorspace: rrt_103_srgb}
+#    - !<View> {name: RRT 0.1.1 (via LMT), colorspace: rrt_011_srgb}
+  Rec709:
+    - !<View> {name: Default, colorspace: Rec709}
+    - !<View> {name: RRT 1.0.3, colorspace: rrt_103_rec709}
+#    - !<View> {name: RRT 0.1.1 (via LMT), colorspace: rrt_011_rec709}
+  None:
+    - !<View> {name: Default, colorspace: Raw}
+
+
+active_displays: [sRGB, Rec709, None]
+active_views: [Default, RRT 1.0.3]
+
+
+colorspaces:
+  - !<ColorSpace>
+    name: ACEScg
+    family: ACES
+    equalitygroup:
+    bitdepth: 32f
+    description: |
+      Linear ACEScg primary space
+    isdata: false
+    allocation: uniform
+    allocationvars: [0, 1]
+
+  - !<ColorSpace>
+    name: ACES
+    family: ACES
+    equalitygroup:
+    bitdepth: 32f
+    isdata: false
+    allocation: uniform
+    allocationvars: [0, 1]
+    to_reference:
+      !<MatrixTransform> {matrix: [1.45144, -0.236511, -0.214929, 0, -0.0765538, 1.17623, -0.0996759, 0, 0.00831615, -0.00603245, 0.997716, 0, 0, 0, 0, 1]}
+
+  - !<ColorSpace>
+    name: Raw
+    family: raw
+    equalitygroup:
+    bitdepth: 32f
+    isdata: true
+    allocation: uniform
+    allocationvars: [0, 1]
+
+  - !<ColorSpace>
+    name: sRGB
+    family: display
+    equalitygroup:
+    bitdepth: 32f
+    description: |
+      Standard RGB Display Space
+    isdata: false
+    allocation: uniform
+    allocationvars: [-0.125, 4.875]
+    to_reference: !<FileTransform> {src: srgb.spi1d, interpolation: linear}
+    from_reference: !<FileTransform> {src: srgb_inv.spi1d, interpolation: linear}
+
+  - !<ColorSpace>
+    name: Rec709
+    family: display
+    equalitygroup:
+    bitdepth: 32f
+    description: |
+      Rec. 709 (Full Range) Display Space
+    isdata: false
+    allocation: uniform
+    allocationvars: [-0.125, 1.125]
+    to_reference: !<GroupTransform>
+      children:
+        - !<FileTransform> {src: rec709.spi1d, interpolation: linear}
+
+  - !<ColorSpace>
+    name: rrt_103_srgb
+    family: ACES
+    equalitygroup: ""
+    bitdepth: 32f
+    description: |
+      ACES 1.0 Output - sRGB Output Transform
+      
+      ACES Transform ID : ODT.Academy.RGBmonitor_100nits_dim.a1.0.3
+    isdata: false
+    allocation: uniform
+    allocationvars: [0, 1]
+    to_reference: !<GroupTransform>
+      children:
+        - !<FileTransform> {src: InvRRT.sRGB.Log2_48_nits_Shaper.spi3d, interpolation: tetrahedral}
+        - !<FileTransform> {src: Log2_48_nits_Shaper_to_linear.spi1d, interpolation: linear}
+    from_reference: !<GroupTransform>
+      children:
+        - !<FileTransform> {src: Log2_48_nits_Shaper_to_linear.spi1d, interpolation: linear, direction: inverse}
+        - !<FileTransform> {src: Log2_48_nits_Shaper.RRT.sRGB.spi3d, interpolation: tetrahedral}
+
+  - !<ColorSpace>
+    name: rrt_103_rec709
+    family: Output
+    equalitygroup: ""
+    bitdepth: 32f
+    description: |
+      ACES 1.0 Output - Rec.709 Output Transform
+      
+      ACES Transform ID : ODT.Academy.Rec709_100nits_dim.a1.0.3
+    isdata: false
+    allocation: uniform
+    allocationvars: [0, 1]
+    to_reference: !<GroupTransform>
+      children:
+        - !<FileTransform> {src: InvRRT.Rec.709.Log2_48_nits_Shaper.spi3d, interpolation: tetrahedral}
+        - !<FileTransform> {src: Log2_48_nits_Shaper_to_linear.spi1d, interpolation: linear}
+    from_reference: !<GroupTransform>
+      children:
+        - !<FileTransform> {src: Log2_48_nits_Shaper_to_linear.spi1d, interpolation: linear, direction: inverse}
+        - !<FileTransform> {src: Log2_48_nits_Shaper.RRT.Rec.709.spi3d, interpolation: tetrahedral}
