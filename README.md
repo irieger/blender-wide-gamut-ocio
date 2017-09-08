@@ -23,3 +23,7 @@ Color Picker is expecting RGB values in ACES AP1 (ACEScg) color space.
 
 
 # Install
+
+Just replace the `2.79/datafiles/colormanagement` in the blender application folder with this repository. Or set the environment variable `OCIO` to the config.ocio file.
+
+    export OCIO=/path/to/config.ocio
